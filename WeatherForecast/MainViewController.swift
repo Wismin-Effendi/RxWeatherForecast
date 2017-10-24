@@ -7,18 +7,34 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 class MainViewController: UITableViewController {
 
     @IBOutlet weak var cityTextField: UITextField!
+    @IBOutlet weak var rxGoButton: UIButton!
     
     var cityName: String?
+    
+    let disposeBag = DisposeBag()
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
         cityTextField.becomeFirstResponder()  // automatically in edit mode on this text field.
+        
+        rxGoButton.rx.tap
+            .filter {[unowned self]  _ in
+                self.cityName = self.cityTextField.text
+                return (self.cityName != nil)
+            }
+            .bind {[unowned self] in
+                self.view.endEditing(true)  // hide keyboard
+                self.performSegue(withIdentifier: "RxShowResult", sender: self)
+            }
+            .disposed(by: disposeBag)
     }
 
 
@@ -31,6 +47,10 @@ class MainViewController: UITableViewController {
         // Pass the selected object to the new view controller.
         if segue.identifier == "ShowResult" {
             if let resultVC = segue.destination as? ForecastTableViewController {
+                resultVC.cityName = cityName!
+            }
+        } else if segue.identifier == "RxShowResult" {
+            if let resultVC = segue.destination as? RxForecastTableViewController {
                 resultVC.cityName = cityName!
             }
         }

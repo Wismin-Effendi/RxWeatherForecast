@@ -1,25 +1,32 @@
 //
-//  ForecastTableViewController.swift
+//  RxForecastTableViewController.swift
 //  WeatherForecast
 //
-//  Created by Wismin Effendi on 6/28/17.
+//  Created by Wismin Effendi on 10/24/17.
 //  Copyright © 2017 iShinobi. All rights reserved.
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
-class ForecastTableViewController: UITableViewController {
+class RxForecastTableViewController: UIViewController {
+
+    @IBOutlet weak var tableView: UITableView!
     
     // pass in this value via segue
     var cityName: String!
-        
+    
+    let disposeBag = DisposeBag()
+    
     var forecasts = [Forecast]()
-
+    var forecastsObservable: Observable<[Forecast]>!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationItem.title = cityName
         populateForecastsForCity()
-    
+        
     }
     
     
@@ -66,12 +73,19 @@ class ForecastTableViewController: UITableViewController {
                 let forecast = Forecast(dateTime: Util.dateTimeStringFromUnixTimeStamp(timestamp), temperatureInKelvin: kelvinTemp, description: description.first!)
                 forecasts.append(forecast)
             }
+            forecastsObservable = Observable.of(forecasts)
         } catch {
             print(error)
         }
-        tableView.reloadData()
+        
+        forecastsObservable.asDriver(onErrorJustReturn: [])
+            .drive(tableView.rx.items(cellIdentifier: "RxForecastCell")) { (_, forecast, cell) in
+                cell.textLabel?.text = forecast.dateTime
+                cell.detailTextLabel?.text = forecast.tempAndDescription
+            }
+            .disposed(by: disposeBag)
     }
-
+    
     
     private func showAlertErrorMessage(code: String, message: String ) {
         let errorMessage = "Error \(code): \(message)"
@@ -80,26 +94,26 @@ class ForecastTableViewController: UITableViewController {
         alertError.addAction(dismissAction)
         present(alertError, animated: true, completion: nil)
     }
-
-    // MARK: - Table view data source
-
-    override func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
-    }
-
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return forecasts.count
-    }
-
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ForecastCell", for: indexPath)
-
-        let forecast = forecasts[indexPath.row]
-        cell.textLabel?.text = forecast.dateTime
-        cell.detailTextLabel?.text = forecast.tempAndDescription
-        
-        return cell
-    }
+//    // MARK: - Table view data source
+//
+//    func numberOfSections(in tableView: UITableView) -> Int {
+//        return 1
+//    }
+//
+//    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+//        return forecasts.count
+//    }
+//
+//
+//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+//        let cell = tableView.dequeueReusableCell(withIdentifier: "ForecastCell", for: indexPath)
+//
+//        let forecast = forecasts[indexPath.row]
+//        cell.textLabel?.text = forecast.dateTime
+//        cell.detailTextLabel?.text = forecast.tempAndDescription
+//
+//        return cell
+//    }
 
 }
