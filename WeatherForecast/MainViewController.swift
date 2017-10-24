@@ -30,10 +30,10 @@ class MainViewController: UITableViewController {
                 self.cityName = self.cityTextField.text
                 return (self.cityName != nil)
             }
-            .bind {[unowned self] in
+            .bind(onNext: {[unowned self] in
                 self.view.endEditing(true)  // hide keyboard
                 self.performSegue(withIdentifier: "RxShowResult", sender: self)
-            }
+            })
             .disposed(by: disposeBag)
     }
 
